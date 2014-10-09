@@ -1,0 +1,53 @@
+<html>
+<head></head>
+<body onload="onload()">
+
+<pre id='console'>
+</pre>
+
+<script src="object.watch.js"></script>
+<script>
+    var console = function () {
+        return ({
+            log: function (msg) {
+                consoleDiv = document.getElementById('console');
+                text = document.createTextNode(msg + '\n');
+                consoleDiv.appendChild(text);
+            }
+        });
+    } ();
+
+    /**************************************** test **************************************/
+    function onload() {
+
+        console.log("object.watch test:\n");
+
+        var someobject = {
+            a: 1,
+            b: 2.2,
+            c: 'c',
+            d: { x: 1 },
+            e: [0],
+            super_nested: { a: { b: { c: { d: { e: { f: { g: [0, { h: 0 }, 2]}}}}}} }
+        };
+
+        someobject.watch(function (prop) {
+            console.log('[' + prop + '] changed to ' + this[prop]);
+        }, {
+            depth:-1,
+            traverseArrays:true,
+            watchArrays:true,
+            watchProps:true
+        });
+
+        someobject.b = 2.2; // no change
+        someobject.a = 0;
+        someobject.b = 'b';
+        someobject.c = 3;
+        someobject.d.x = 2;
+        someobject.e[0] = 3;
+        someobject.super_nested.a.b.c.d.e.f.g[1].h += 1;
+    };
+</script>
+</body>
+</html>
