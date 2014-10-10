@@ -5,19 +5,21 @@
 *      after the watch was created.
 *
 *  params:
-*      onChange [function](prop): the callback function. The prop argument is the name
-*                                 of the property that changed.
-*     options [object|optional] : the optional options object
-*  -------------------------------------------------------------------------------------
-*           depth [int|optional]: the maximum depth of tree traversal to build the watch
-*                                 for. the default value is 0 which is no traverseral.
-*                                 -1 will traverse the full object graph.
-*    watchArrays [bool|optional]: flag to watch array values for changes. default: false
-*     watchProps [bool|optional]: flag to watch property values for changes.
-*                                 default value: true
-* traverseArrays [bool|optional]: flag that tells the builder to enumerate arrays to 
-*                                 look for objects to further traverse.
-*                                 default value: false
+*       onChange [function](prop): the callback function. The prop argument is the name
+*                                  of the property that changed.
+*      options [object|optional] : the optional options object
+*   -------------------------------------------------------------------------------------
+*            depth [int|optional]: the maximum depth of tree traversal to build the watch
+*                                  for. the default value is 0 which is no traverseral.
+*                                  -1 will traverse the full object graph.
+*     watchArrays [bool|optional]: flag to watch array values for changes. default: false
+*      watchProps [bool|optional]: flag to watch property values for changes.
+*                                  default value: true
+*  traverseArrays [bool|optional]: flag that tells the builder to enumerate arrays to 
+*                                  look for objects to further traverse.
+*                                  default value: false
+* toWatch [string|array|optional]: the specific property name to watch or an array of
+*                                  property names to watch
 */
 Object.prototype.watch = function (onChange, options) {
     var TYPES = {
@@ -40,24 +42,26 @@ Object.prototype.watch = function (onChange, options) {
         if (depth <= maxdepth || maxdepth == -1) {
             for (var property in obj) {
                 if (obj.hasOwnProperty(property)) {
-                    if (type(obj[property]) == "array") {
-                        var array = obj[property];
-                        for (var i = 0; i < array.length; i++) {
-                            if (options.traverseArrays)
-                                iterate(array[i], callback, depth++, maxdepth);
-                            if (options.watchArrays) {
-                                var etype = type(array[i]);
-                                if (etype != "array" && etype != "object")
-                                    callback(array, i);
+                    if (!options.toWatch || options.toWatch[property]) {
+                        if (type(obj[property]) == "array") {
+                            var array = obj[property];
+                            for (var i = 0; i < array.length; i++) {
+                                if (options.traverseArrays)
+                                    iterate(array[i], callback, ++depth, maxdepth);
+                                if (options.watchArrays) {
+                                    var etype = type(array[i]);
+                                    if (etype != "array" && etype != "object")
+                                        callback(array, i);
+                                }
                             }
-                        }
 
-                    }
-                    else if (type(obj[property]) == "object")
-                        iterate(obj[property], callback, depth++, maxdepth);
-                    else {
-                        if (options.watchProps) callback(obj, property);
-                        props++;
+                        }
+                        else if (type(obj[property]) == "object")
+                            iterate(obj[property], callback, ++depth, maxdepth);
+                        else {
+                            if (options.watchProps) callback(obj, property);
+                            props++;
+                        }
                     }
 
                 }
@@ -95,6 +99,15 @@ Object.prototype.watch = function (onChange, options) {
     if (type(options.watchArrays) == 'undefined') options.watchArrays = false;
     if (type(options.watchProps) == 'undefined') options.watchProps = true;
     if (type(options.traverseArrays) == 'undefined') options.traverseArrays = false;
+    var tmp = options.toWatch;
+    options.toWatch = {};
+    if (type(tmp) == 'undefined') options.toWatch = undefined;
+    if (type(tmp) == 'string') options.toWatch[tmp] = true;
+    if (type(tmp) == 'array') {
+        for (var i = 0; i < tmp.length; i++) {
+            options.toWatch[tmp[i]] = true;
+        }
+    }
     var obj = this;
     iterate(obj, function (obj, prop) {
         watch_prop(obj, prop, function (prop) { onChange.call(obj, prop); })

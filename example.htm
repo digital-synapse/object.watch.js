@@ -20,8 +20,6 @@
     /**************************************** test **************************************/
     function onload() {
 
-        console.log("object.watch test:\n");
-
         var someobject = {
             a: 1,
             b: 2.2,
@@ -30,10 +28,19 @@
             e: [0],
             super_nested: { a: { b: { c: { d: { e: { f: { g: [0, { h: 0 }, 2]}}}}}} }
         };
-
-        someobject.watch(function (prop) {
+        var watchCallback = function (prop) {
             console.log('[' + prop + '] changed to ' + this[prop]);
-        }, {
+        };
+
+        console.log("object.watch no traversal:\n");
+        someobject.watch(watchCallback);
+
+        someobject.c=9;  // triggers callback
+        someobject.e[0] =9; // does not trigger callback (array watch disabled by default)
+        someobject.d.x=9;  // does not trigger (nested object watch disabled by default)
+
+        console.log("\nobject.watch nested object:\n");
+        someobject.watch(watchCallback, {
             depth:-1,
             traverseArrays:true,
             watchArrays:true,
@@ -47,6 +54,15 @@
         someobject.d.x = 2;
         someobject.e[0] = 3;
         someobject.super_nested.a.b.c.d.e.f.g[1].h += 1;
+
+        console.log("\nobject.watch single property:\n");
+
+        someobject.watch(watchCallback, {
+            toWatch: 'a',
+            depth:0
+        });
+
+        someobject.a = 5;
     };
 </script>
 </body>
