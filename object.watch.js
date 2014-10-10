@@ -10,7 +10,7 @@
 *      options [object|optional] : the optional options object
 *   -------------------------------------------------------------------------------------
 *            depth [int|optional]: the maximum depth of tree traversal to build the watch
-*                                  for. the default value is 0 which is no traverseral.
+*                                  for. the default value is 0 which is no traversal.
 *                                  -1 will traverse the full object graph.
 *     watchArrays [bool|optional]: flag to watch array values for changes. default: false
 *      watchProps [bool|optional]: flag to watch property values for changes.
@@ -55,7 +55,6 @@ Object.prototype.watch = function (onChange, options) {
                                         callback(array, i);
                                 }
                             }
-
                         }
                         else if (type(obj[property]) == "object")
                             iterate(obj[property], callback, ++depth, maxdepth);
@@ -71,21 +70,20 @@ Object.prototype.watch = function (onChange, options) {
         return props;
     };
     var watch_prop = function (obj, prop, onChange) {
-        var 
-			  oldval = obj[prop]
-			, newval = oldval
-			, getter = function () {
-			    return newval;
-			}
-			, setter = function (val) {
-			    if (val != oldval) {
-			        oldval = newval;
-			        newval = val;
-			        onChange.call(obj, prop, val, oldval);
-			    }
-			}
-			;
-        if (delete obj[prop]) { // can't watch constants
+        var oldval = obj[prop]
+		, newval = oldval
+		, getter = function () {
+			return newval;
+		}
+		, setter = function (val) {
+		    if (val != oldval) {
+			oldval = newval;
+			newval = val;
+			onChange.call(obj, prop, val, oldval);
+		    }
+	  	}
+		;
+    	if (delete obj[prop]) { // can't watch constants
             Object.defineProperty(obj, prop, {
                 get: getter
 					, set: setter
