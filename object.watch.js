@@ -19,7 +19,8 @@
 *                                  look for objects to further traverse.
 *                                  default value: false
 * toWatch [string|array|optional]: the specific property name to watch or an array of
-*                                  property names to watch
+*                                  property names to watch. If ommitted, all properties
+*                                  will be watched for changes
 */
 Object.prototype.watch = function (onChange, options) {
     var TYPES = {
