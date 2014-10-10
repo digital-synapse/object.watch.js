@@ -86,9 +86,9 @@ Object.prototype.watch = function (onChange, options) {
     	if (delete obj[prop]) { // can't watch constants
             Object.defineProperty(obj, prop, {
                 get: getter
-					, set: setter
-					, enumerable: true
-					, configurable: true
+				, set: setter
+				, enumerable: true
+				, configurable: true
             });
         }
     }
