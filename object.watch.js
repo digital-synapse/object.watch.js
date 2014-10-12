@@ -5,10 +5,16 @@
 *      after the watch was created.
 *
 *  params:
-*       onChange [function](prop): the callback function. The prop argument is the name
-*                                  of the property that changed.
-*      options [object|optional] : the optional options object
+*                options [object]: the options object
 *   -------------------------------------------------------------------------------------
+*    onChange [function|optional]: (obj, prop, val, oldval)
+*                                  the callback function. if a value is returned it will
+*                                  override the value of the property
+*                                  obj: the container of the property
+*                                  prop: the name of the property that changed
+*                                  val: the new value of the property
+*                                  oldval: the previous value of the property
+*                                    
 *            depth [int|optional]: the maximum depth of tree traversal to build the watch
 *                                  for. the default value is 0 which is no traversal.
 *                                  -1 will traverse the full object graph.
@@ -22,7 +28,7 @@
 *                                  property names to watch. If ommitted, all properties
 *                                  will be watched for changes
 */
-Object.prototype.watch = function (onChange, options) {
+Object.prototype.watch = function (options) {
     var TYPES = {
         'undefined': 'undefined',
         'number': 'number',
@@ -69,21 +75,27 @@ Object.prototype.watch = function (onChange, options) {
         }
         return props;
     };
+    var unwatch_prop = function (obj, prop) {
+        var tmp = obj[prop];
+        delete obj[prop];
+        obj[prop] = tmp;
+    };
     var watch_prop = function (obj, prop, onChange) {
         var oldval = obj[prop]
 		, newval = oldval
 		, getter = function () {
-			return newval;
+		    return newval;
 		}
 		, setter = function (val) {
 		    if (val != oldval) {
-			oldval = newval;
-			newval = val;
-			onChange.call(obj, prop, val, oldval);
+		        oldval = newval;
+		        newval = val;
+		        var tmp = onChange.call(obj, prop, val, oldval);
+		        if (tmp) newval = tmp;
 		    }
-	  	}
+		}
 		;
-    	if (delete obj[prop]) { // can't watch constants
+        if (delete obj[prop]) { // can't watch constants
             Object.defineProperty(obj, prop, {
                 get: getter
 				, set: setter
@@ -92,12 +104,13 @@ Object.prototype.watch = function (onChange, options) {
             });
         }
     }
-    if (!onChange) throw 'object.watch : onChange callback is required';
     if (!options) options = {};
     if (!options.depth) options.depth = 0;
     if (type(options.watchArrays) == 'undefined') options.watchArrays = false;
     if (type(options.watchProps) == 'undefined') options.watchProps = true;
     if (type(options.traverseArrays) == 'undefined') options.traverseArrays = false;
+    if (type(options._unwatch) == 'undefined') options._unwatch = false;
+    if (!options._unwatch && !options.onChange) throw 'object.watch : onChange callback is required';
     var tmp = options.toWatch;
     options.toWatch = {};
     if (type(tmp) == 'undefined') options.toWatch = undefined;
@@ -108,7 +121,18 @@ Object.prototype.watch = function (onChange, options) {
         }
     }
     var obj = this;
-    iterate(obj, function (obj, prop) {
-        watch_prop(obj, prop, function (prop) { onChange.call(obj, prop); })
-    }, 0, options.depth);
+    if (options._unwatch) {
+        iterate(obj, function (obj, prop) {
+            unwatch_prop(obj, prop);
+        }, 0, options.depth);
+    }
+    else {
+        iterate(obj, function (obj, prop) {
+            watch_prop(obj, prop, options.onChange);
+        }, 0, options.depth);
+    }
+};
+
+Object.prototype.unwatch = function () {
+    this.watch({_unwatch:true, depth:-1, watchArrays:true, watchProperties:true, traverseArrays:true});
 };
