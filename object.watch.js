@@ -7,10 +7,9 @@
 *  params:
 *                options [object]: the options object
 *   -------------------------------------------------------------------------------------
-*    onChange [function|optional]: (obj, prop, val, oldval)
+*    onChange [function|optional]: (prop, val, oldval)
 *                                  the callback function. if a value is returned it will
 *                                  override the value of the property
-*                                  obj: the container of the property
 *                                  prop: the name of the property that changed
 *                                  val: the new value of the property
 *                                  oldval: the previous value of the property
